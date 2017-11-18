@@ -14,46 +14,50 @@ var FirstPersonControls = {};
 var ua = navigator.userAgent;
 
 if (ua.indexOf('iPhone') > 0 || ua.indexOf('iPod') > 0 || ua.indexOf('Android') > 0) {
-  var sp = true;
+    var sp = true;
 }else if(ua.indexOf('iPad') > 0 || ua.indexOf('Android') > 0){
-  var sp = true;
+    var sp = true;
 }
 
 init();
 setControl();
+setInterval( function(){
+    controls.update();
+    if(camera_move ==  1 ) Foward();
+    if(camera_move == -1 ) Back();
+}, 50 );
 animate();
 
 
 
 
 function init() {
-  createScene();
-  createGLScene();
-  createCamera();
-      
-  createDisplay();
-  createGround();
-
-  createRandomBox();
-
-  createLight();
-  
-  createControls();
+    createScene();
+    createGLScene();
+    createCamera();
     
-  window.addEventListener('resize', onWindowResize, false);
-  
-  createBlocker();
-  createStats();
+    createDisplay();
+    // createGround();
+
+    loadOBJ( './torii/', 'torii' );
+    createRandomBox();
+
+    createLight();
+    
+    createControls();
+    
+    window.addEventListener('resize', onWindowResize, false);
+    
+    createBlocker();
+    createStats();
 }
 
+
 function animate() {
-  controls.update();
-  renderer.render(scene, camera);
-  gl_renderer.render(gl_scene, camera);
-  if(camera_move == 1 ) Foward();
-  if(camera_move == -1 ) Back();
-  stats.update();  
-  requestAnimationFrame(animate);
+    gl_renderer.render(gl_scene, camera);
+    renderer.render(scene, camera);
+    stats.update();  
+    requestAnimationFrame(animate);
 }
 
 
@@ -62,65 +66,57 @@ function animate() {
 
 
 function createScene(){
-  scene = new THREE.Scene(); 
-  renderer = new THREE.CSS3DRenderer();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
-  renderer.domElement.style.zIndex = 0;
-  renderer.domElement.style.position = 'absolute';  
+    scene = new THREE.Scene(); 
+    renderer = new THREE.CSS3DRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    renderer.domElement.style.zIndex = 0;
+    renderer.domElement.style.position = 'absolute';  
 }
 
 function createGLScene(){
-  gl_scene = new THREE.Scene();
-  gl_scene.fog = new THREE.FogExp2(0xffffff, 0.01);
-  gl_renderer = new THREE.WebGLRenderer({alpha:true});
-  gl_renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(gl_renderer.domElement);
-  gl_renderer.domElement.style.zIndex = 1;
-  gl_renderer.domElement.style.position = 'absolute';
-  gl_renderer.shadowMap.enabled = true;
-  //   gl_renderer.domElement.style.display = 'none';
+    gl_scene = new THREE.Scene();
+    gl_scene.fog = new THREE.FogExp2(0xffffff, 0.01);
+    gl_renderer = new THREE.WebGLRenderer({ alpha:true });
+    gl_renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(gl_renderer.domElement);
+    gl_renderer.domElement.style.zIndex = 1;
+    gl_renderer.domElement.style.position = 'absolute';
+    gl_renderer.shadowMap.enabled = true;
 }
 
 function createCamera(){
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 500);
-  camera.position.y = 1.5;
-  camera.position.z = 3.5;  
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 500);
+    camera.position.y = 1.0;
+    camera.position.z = 3.5;  
 }
 
 function createLight(){
-  var ambientLight = new THREE.AmbientLight(0x333333);
-  gl_scene.add(ambientLight);
-  var directionalLight = new THREE.DirectionalLight(0xffffff);
-  directionalLight.position.set( 5, 50, 5 );
-  directionalLight.castShadow            = true;
-  directionalLight.shadow.camera.left    = -30;
-  directionalLight.shadow.camera.right   =  30;
-  directionalLight.shadow.camera.bottom  = -30;
-  directionalLight.shadow.camera.top     =  30;
-  directionalLight.shadow.camera.far     = 100;
-  directionalLight.shadow.mapSize.width  = 2048;
-  directionalLight.shadow.mapSize.height = 2048;
-  gl_scene.add(directionalLight);    
+    var ambientLight = new THREE.AmbientLight(0x333333);
+    gl_scene.add(ambientLight);
+    var directionalLight = new THREE.DirectionalLight(0xffffff);
+    directionalLight.position.set( 5, 50, 5 );
+    directionalLight.castShadow            = true;
+    directionalLight.shadow.camera.left    = -30;
+    directionalLight.shadow.camera.right   =  30;
+    directionalLight.shadow.camera.bottom  = -30;
+    directionalLight.shadow.camera.top     =  30;
+    directionalLight.shadow.camera.far     = 100;
+    directionalLight.shadow.mapSize.width  = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
+    gl_scene.add(directionalLight);    
 }
 
 function createControls(){
-  if(sp) {
-    controls = new THREE.DeviceOrientationControls( camera,gl_renderer.domElement );
-    controls.connect();
-    document.body.addEventListener('touchmove', function(event) {event.preventDefault();}, false ); 
-    document.addEventListener( 'touchstart', OnTouch, false );
-    document.addEventListener( 'touchend', function(){camera_move = 0;}, false );
-  } else {
-      controls = FirstPersonControls;
-      // controls = new THREE.TrackballControls(camera);
-      // controls = new THREE.FirstPersonControls( camera );
-
-      // controls.movementSpeed = 1;
-      // controls.lookSpeed = 0.05;
-      // controls.noFly = true;
-      // controls.lookVertical = false;
-  }
+    if(sp) {
+	controls = new THREE.DeviceOrientationControls( camera,gl_renderer.domElement );
+	controls.connect();
+	document.body.addEventListener('touchmove', function(event) {event.preventDefault();}, false ); 
+	document.addEventListener( 'touchstart', OnTouch, false );
+	document.addEventListener( 'touchend', function(){camera_move = 0;}, false );
+    } else {
+	controls = FirstPersonControls;
+    }
 }
 
 
@@ -131,127 +127,170 @@ function createControls(){
 
 
 function createPlane(w, h, position, rotation) {
-  var  material = new THREE.MeshBasicMaterial({
-    color: 0x000000,
-    opacity: 0.0,
-    side: THREE.DoubleSide
-  });
-  var geometry = new THREE.PlaneGeometry(w, h);
-  var mesh = new THREE.Mesh(geometry, material);
-  mesh.position.x = position.x;
-  mesh.position.y = position.y;
-  mesh.position.z = position.z;
-  mesh.rotation.x = rotation.x;
-  mesh.rotation.y = rotation.y;
-  mesh.rotation.z = rotation.z;
-  return mesh;
+    var  material = new THREE.MeshBasicMaterial({
+	color: 0x000000,
+	opacity: 0.0,
+	side: THREE.DoubleSide,
+	blending: THREE.NoBlending
+    });
+    var geometry = new THREE.PlaneGeometry(w, h);
+    var mesh = new THREE.Mesh(geometry, material);
+    mesh.position.x = position.x;
+    mesh.position.y = position.y;
+    mesh.position.z = position.z;
+    mesh.rotation.x = rotation.x;
+    mesh.rotation.y = rotation.y;
+    mesh.rotation.z = rotation.z;
+    return mesh;
 }
 
 function create3dPage( w, h, position, rotation, url ) {
-  var plane = createPlane( w, h, position, rotation );
-  gl_scene.add( plane );
-  
-  var div = document.createElement('div');
-  div.style.width = 1000*w+'px';
-  div.style.height = 1000*h+'px';
-  div.style.overflow = 'auto';
-  div.style.WebkitOverflowScrolling = 'touch';
+    var plane = createPlane( w, h, position, rotation );
+    gl_scene.add( plane );
     
-  var iframe = document.createElement('iframe');  
-  iframe.style.width = '100%';
-  iframe.style.height = '100%';
-  iframe.style.display = 'block';
-  iframe.style.zoom = '0.001';
-  iframe.src = url;
-  
-  div.appendChild(iframe);
-  
-  var cssObject = new THREE.CSS3DObject(div);
-  
-  cssObject.position.x = position.x;
-  cssObject.position.y = position.y;
-  cssObject.position.z = position.z;
-  cssObject.rotation.x = rotation.x;
-  cssObject.rotation.y = rotation.y;
-  cssObject.rotation.z = rotation.z;
+    var div = document.createElement('div');
+    div.style.width = 1000*w+'px';
+    div.style.height = 1000*h+'px';
+    div.style.overflow = 'auto';
+    div.style.WebkitOverflowScrolling = 'touch';
+    
+    var iframe = document.createElement('iframe');  
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.display = 'block';
+    iframe.style.zoom = '0.001';
+    iframe.src = url;
+    
+    div.appendChild(iframe);
+    
+    var cssObject = new THREE.CSS3DObject(div);
+    
+    cssObject.position.x = position.x;
+    cssObject.position.y = position.y;
+    cssObject.position.z = position.z;
+    cssObject.rotation.x = rotation.x;
+    cssObject.rotation.y = rotation.y;
+    cssObject.rotation.z = rotation.z;
 
-  cssObject.scale.set(0.001,0.001,0.001);
-  
-  scene.add(cssObject);
+    cssObject.scale.set(0.001,0.001,0.001);
+    
+    scene.add(cssObject);
 }
 
 function createDisplay(){
-  var box0 = new THREE.Mesh(
-    new THREE.BoxGeometry(1.99,2,1.99),
-    new THREE.MeshPhongMaterial({color: 0x999999})
-  );
-  
-  box0.position.y = 1;
-  box0.castShadow = true;
-  box0.receiveShadow = true;
-  gl_scene.add(box0);
-    
-  create3dPage(
-    1.8, 1.8,
-    new THREE.Vector3(0, 1, -1),
-    new THREE.Vector3(0, Math.PI, 0),
-    'https://www.calculator29.com'
-  );
-  create3dPage(
-    1.8, 1.8,
-    new THREE.Vector3(1, 1, 0),
-    new THREE.Vector3(0, Math.PI/2.0, 0),
-    'https://www.calculator29.com/Robots'
-  );
-  create3dPage(
-    1.8, 1.8,
-    new THREE.Vector3(0, 1, 1),
-    new THREE.Vector3(0, 0, 0),
-    'https://www.calculator29.com/Software'
-  );
+    var position = new THREE.Vector3(3,0,-1);
+    var box = new THREE.Mesh(
+	new THREE.BoxGeometry(1.99,2,1.99),
+	new THREE.MeshPhongMaterial({color: 0x999999})
+    );
 
-  create3dPage(
-    1.8, 1.8,
-    new THREE.Vector3(-1, 1, 0),
-    new THREE.Vector3(0, -Math.PI/2.0, 0),
-    'https://www.calculator29.com/Design'
-  );    
+    box.position.x = position.x;
+    box.position.y = position.y+1;
+    box.position.z = position.z;
+    box.castShadow = true;
+    box.receiveShadow = true;
+    gl_scene.add(box);
+    
+    create3dPage(
+	1.8, 1.8,
+	new THREE.Vector3(position.x, position.y+1, position.z-1),
+	new THREE.Vector3(0, Math.PI, 0),
+	'https://www.calculator29.com'
+    );
+    create3dPage(
+	1.8, 1.8,
+	new THREE.Vector3(position.x+1, position.y+1, position.z),
+	new THREE.Vector3(0, Math.PI/2.0, 0),
+	'https://www.calculator29.com/Robots'
+    );
+    create3dPage(
+	1.8, 1.8,
+	new THREE.Vector3(position.x, position.y+1, position.z+1),
+	new THREE.Vector3(0, 0, 0),
+	'https://www.calculator29.com/Software'
+    );
+
+    create3dPage(
+	1.8, 1.8,
+	new THREE.Vector3(position.x-1, position.y+1, position.z),
+	new THREE.Vector3(0, -Math.PI/2.0, 0),
+	'https://www.calculator29.com/Design'
+    );    
 }
 
 function createGround(){
-  var plane = new THREE.Mesh(
-    new THREE.PlaneGeometry(1000,1000),
-    new THREE.MeshPhongMaterial({color: 0x555555})
-  );
-  plane.rotation.x = -Math.PI/2.0;
-  plane.receiveShadow = true;
-  gl_scene.add(plane);  
+    var plane = new THREE.Mesh(
+	new THREE.PlaneGeometry(1000,1000),
+	new THREE.MeshPhongMaterial({color: 0x999999})
+    );
+    plane.rotation.x = -Math.PI/2.0;
+    plane.receiveShadow = true;
+    gl_scene.add(plane);  
 }
 
+function loadOBJ( path, name ){
+    var mtlLoader = new THREE.MTLLoader();
+    mtlLoader.setPath( path );
+    
+    mtlLoader.load( name + '.mtl', function ( materials ) {
+    	materials.preload();
+	
+	var objLoader = new THREE.OBJLoader();
+	objLoader.setPath( path );
+	objLoader.setMaterials( materials );
+	objLoader.load( name + '.obj', function ( objects ) {
+	    objects.traverse( function( object ){
+		if ( object instanceof THREE.Mesh ) {
+		    object.castShadow    = true;
+		    object.receiveShadow = true;
+		    object.material.forEach(function(mat){
+			mat.alphaTest = 0.9;
+			mat.transparent = true;
+			mat.side = THREE.DoubleSide;
+		    });
+		}
+	    });
+	    objects.position.set( 0, 0.01, 0 );
+	    objects.scale.set( 0.1, 0.1, 0.1 );
+	    gl_scene.add( objects );
+	});
+    });
+}
+
+function loadJSON( path, name ){
+    loader = new THREE.JSONLoader();　　
+    loader.load( path + name + ".json" , function(geo, mat){
+        var faceMat = new THREE.MeshFaceMaterial(mat);　　　
+        var model = new THREE.Mesh(geo, faceMat);　　　
+        model.position.set(0, 0, 0);　　　
+        model.scale.set(0.1, 0.1, 0.1);　　　
+        gl_scene.add( model );
+    });　　
+}
 
 function createRandomBox(){
-  for(var i=0;i<50;i++){
-    var pos = {
-      x: 30*(Math.random()-0.5),
-      y: 20*Math.random(),
-      z: 30*(Math.random()-0.5)
-    };
-    for(var j=0;j<10;j++){
-      var Size = Math.random();
-      var box = new THREE.Mesh(
-        new THREE.BoxGeometry(Size,Size,Size),
-        new THREE.MeshPhongMaterial({color: Math.random()*0xffffff})
-      );
-      
-      box.position.x = pos.x + 3*(Math.random()-0.5);
-      box.position.y = pos.y + 3*(Math.random()-0.5);
-      box.position.z = pos.z + 3*(Math.random()-0.5);
-        
-      box.castShadow = true;
-      
-      gl_scene.add(box);
-    }
-  }  
+    for(var i=0;i<10;i++){
+	var pos = {
+	    x: 30*(Math.random()-0.5),
+	    y: 20*Math.random(),
+	    z: 30*(Math.random()-0.5)
+	};
+	for(var j=0;j<10;j++){
+	    var Size = 0.5*Math.random();
+	    var box = new THREE.Mesh(
+		new THREE.BoxGeometry(Size,Size,Size),
+		new THREE.MeshPhongMaterial({color: Math.random()*0xffffff})
+	    );
+	    
+	    box.position.x = pos.x + 3*(Math.random()-0.5);
+	    box.position.y = pos.y + 3*(Math.random()-0.5);
+	    box.position.z = pos.z + 3*(Math.random()-0.5);
+            
+	    box.castShadow = true;
+	    
+	    gl_scene.add(box);
+	}
+    }  
 }
 
 
@@ -260,22 +299,22 @@ function createRandomBox(){
 
 
 function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight); 
-  gl_renderer.setSize(window.innerWidth, window.innerHeight); 
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight); 
+    gl_renderer.setSize(window.innerWidth, window.innerHeight); 
 }
 
 function createBlocker(){
-  var blocker = document.createElement( 'blocker' );
-  blocker.style.display = 'none';
-  document.addEventListener( 'mousedown', function () { blocker.style.display = ''; } );
-  document.addEventListener( 'mouseup', function () { blocker.style.display = 'none'; } );    
+    var blocker = document.createElement( 'blocker' );
+    blocker.style.display = 'none';
+    document.addEventListener( 'mousedown', function () { blocker.style.display = ''; } );
+    document.addEventListener( 'mouseup', function () { blocker.style.display = 'none'; } );    
 }
 
 function createStats(){
-  stats = new Stats();
-  document.body.appendChild( stats.dom );  
+    stats = new Stats();
+    document.body.appendChild( stats.dom );  
 }
 
 
@@ -286,24 +325,24 @@ function createStats(){
 
 
 function Foward(){
-  var forward = new THREE.Vector4(0, 0, 1, 0);
-  forward.applyMatrix4(camera.matrix).normalize();
-  forward.multiplyScalar(-0.1);
-  camera.position.add(forward);
+    var forward = new THREE.Vector4(0, 0, 1, 0);
+    forward.applyMatrix4(camera.matrix).normalize();
+    forward.multiplyScalar(-0.1);
+    camera.position.add(forward);
 }
 
 function Back(){
-  var forward = new THREE.Vector4(0, 0, 1, 0);
-  forward.applyMatrix4(camera.matrix).normalize();
-  forward.multiplyScalar(0.1);
-  camera.position.add(forward);
+    var forward = new THREE.Vector4(0, 0, 1, 0);
+    forward.applyMatrix4(camera.matrix).normalize();
+    forward.multiplyScalar(0.1);
+    camera.position.add(forward);
 }
 
 function OnTouch(ev){
-  var x = ev.pageX / window.innerHeight;
-  var y = ev.pageY / window.innerWidth;
-  if(y<0.5) camera_move = 1;
-  else camera_move = -1;
+    var x = ev.pageX / window.innerHeight;
+    var y = ev.pageY / window.innerWidth;
+    if(y<0.5) camera_move = 1;
+    else camera_move = -1;
 };
 
 
@@ -347,8 +386,8 @@ function setControl(){
 
     FirstPersonControls.update = function() {
 	var root = yawObject;
-	var speed = 0.05;
-	var forward = getForward(root).setY(0).normalize();
+	var speed = 0.2;
+	var forward = getForward(root).normalize();
 
 	// Y軸に沿って移動
 	if (moveState.up)
@@ -385,7 +424,7 @@ function setControl(){
     pitchObject.add(camera);
     yawObject.add(pitchObject);
     yawObject.position.set(0, 1.0, 3);
-    scene.add(yawObject);
+    gl_scene.add(yawObject);
     var PI_2 = Math.PI / 2;
     document.addEventListener("mousemove", function (e) {
 	if (moving) {
