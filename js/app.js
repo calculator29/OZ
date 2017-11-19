@@ -1,35 +1,39 @@
 'use strict';
 
-var camera, scene, renderer;
+var camera;
+
+var scene, renderer;
 var gl_scene, gl_renderer;
-var controls;
-var object;
+
+// FPS表示
 var stats;
+
+// コントロール関連
+var controls;
+
+// スマホ用
 var camera_move = 0;
 
+// PC用
 var moving = false;
 var moveState = { up: 0, down: 0, left: 0, right: 0, forward: 0, back: 0 };
-var pitchObject = new THREE.Object3D();
-var yawObject = new THREE.Object3D();
+var pitchObject = new THREE.Object3D(), yawObject = new THREE.Object3D();
 var FirstPersonControls = {};
+var clock;
 
-var world, min, max, partition, octree, playerObjectHolder, playerController;
-
+// スマホ判定
 var ua = navigator.userAgent;
-
 if (ua.indexOf('iPhone') > 0 || ua.indexOf('iPod') > 0 || ua.indexOf('Android') > 0) {
   var sp = true;
 }else if(ua.indexOf('iPad') > 0 || ua.indexOf('Android') > 0){
   var sp = true;
 }
 
+
+
+
 init();
 setControl();
-setInterval( function(){
-  controls.update();
-  if(camera_move ==  1 ) Foward();
-  if(camera_move == -1 ) Back();
-}, 50 );
 animate();
 
 
@@ -39,18 +43,16 @@ function init() {
   createScene();
   createGLScene();
   createCamera();
-  initMeshWalk();
 
   // createDisplay();
-  createGround();
-  // if(sp) loadOBJ( './torii/', 'torii', new THREE.Vector3(0, 0.0, 0), new THREE.Vector3(0, 0, 0), );
-  // else   loadOBJ( './torii/', 'torii_full', new THREE.Vector3(0, 0.0, 0), new THREE.Vector3(0, 0, 0), );
+  // createGround();
+  if(sp) loadOBJ( './torii/', 'torii', new THREE.Vector3(0, 0.0, 0), new THREE.Vector3(0, 0, 0), );
+  else   loadOBJ( './torii/', 'torii_full', new THREE.Vector3(0, 0.0, 0), new THREE.Vector3(0, 0, 0), );
   createRandomBox();
 
   createLight();
 
   createControls();
-  createCharacterController();
 
   window.addEventListener('resize', onWindowResize, false);
 
@@ -60,31 +62,14 @@ function init() {
 
 
 function animate() {
-  var delta = clock.getDelta();
-  world.step( Math.min( delta, 0.02 ) );
+  controls.update();
+  if(camera_move ==  1 ) Foward();
+  if(camera_move == -1 ) Back();
 
   gl_renderer.render(gl_scene, camera);
   renderer.render(scene, camera);
   stats.update();
   requestAnimationFrame(animate);
-}
-
-
-
-
-function initMeshWalk(){
-  world = new MW.World();
-  min = new THREE.Vector3( -15, -15, -15 );
-  max = new THREE.Vector3(  15,  15,  15 );
-  partition = 5;
-  octree = new MW.Octree( min, max, partition );
-  world.add( octree );
-}
-
-function createCharacterController(){
-  playerObjectHolder = yawObject;
-  playerController = new MW.CharacterController( playerObjectHolder, 1 );
-  world.add( playerController );
 }
 
 
@@ -137,7 +122,12 @@ function createControls(){
     controls = new THREE.DeviceOrientationControls( camera,gl_renderer.domElement );
     controls.connect();
     document.body.addEventListener('touchmove', function(event) {event.preventDefault();}, false );
-    document.addEventListener( 'touchstart', OnTouch, false );
+    document.addEventListener( 'touchstart', function OnTouch(event){
+      var x = event.pageX / window.innerHeight;
+      var y = event.pageY / window.innerWidth;
+      if(y<0.5) camera_move = 1;
+      else      camera_move = -1;
+    }, false );
     document.addEventListener( 'touchend', function(){camera_move = 0;}, false );
   } else {
     controls = FirstPersonControls;
@@ -251,7 +241,6 @@ function createGround(){
   plane.rotation.x = -Math.PI/2.0;
   plane.receiveShadow = true;
   gl_scene.add(plane);
-  octree.importThreeMesh( plane );
 }
 
 function loadOBJ( path, name, position, rotation ){
@@ -284,7 +273,6 @@ function loadOBJ( path, name, position, rotation ){
       objects.position.set( position.x, position.y, position.z );
       objects.rotation.set( rotation.x, rotation.y, rotation.z );
       gl_scene.add( objects );
-      octree.importThreeMesh( object );
     });
   });
 }
@@ -370,14 +358,6 @@ function Back(){
   camera.position.add(forward);
 }
 
-function OnTouch(ev){
-  var x = ev.pageX / window.innerHeight;
-  var y = ev.pageY / window.innerWidth;
-  if(y<0.5) camera_move = 1;
-  else camera_move = -1;
-};
-
-
 
 
 
@@ -407,6 +387,8 @@ function PointerLock(){
 
 
 function setControl(){
+  clock = new THREE.Clock();
+
   PointerLock();
 
   function getForward(obj) {
@@ -416,12 +398,29 @@ function setControl(){
     return dir;
   }
 
+  function getHeight(){
+    var TopOverPos = new THREE.Vector3(yawObject.position.x, yawObject.position.y, yawObject.position.z); //1.はるか上空のポイントを用意
+    var downVect = new THREE.Vector3(0,-1,0);     //下向きのベクトルのみが入ったVector3を用意
+
+    var ray = new THREE.Raycaster(TopOverPos, downVect.normalize());  //2.真下に向かう線がコレ
+
+    var maxY = 0;  //衝突対象が複数あった場合、一番「高い」ものを取得するようにします
+    var objs = ray.intersectObjects(gl_scene.children, true);   //衝突点検出！
+    for (var i = 0; i < objs.length; i++) {
+      if(maxY <  objs[i].point.y)
+        maxY = objs[i].point.y;
+    }
+
+    return maxY;
+  }
+
   FirstPersonControls.update = function() {
     var root = yawObject;
-    var speed = 0.2;
+    var speed = 5*clock.getDelta();
     var forward = getForward(root).normalize();
 
     // Y軸に沿って移動
+    root.position.y = getHeight() + 1.5 + 0.01*Math.sin( clock.oldTime * 0.002 );
     if (moveState.up)
       root.position.y += speed;
     if (moveState.down)
@@ -447,6 +446,7 @@ function setControl(){
       root.position.x += right.x * speed;
       root.position.z += right.z * speed;
     }
+
   }
 
 
