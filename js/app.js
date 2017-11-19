@@ -44,7 +44,7 @@ function init() {
   createGLScene();
   createCamera();
 
-  // createDisplay();
+  createDisplay();
   // createGround();
   if(sp) loadOBJ( './torii/', 'torii', new THREE.Vector3(0, 0.0, 0), new THREE.Vector3(0, 0, 0), );
   else   loadOBJ( './torii/', 'torii_full', new THREE.Vector3(0, 0.0, 0), new THREE.Vector3(0, 0, 0), );
