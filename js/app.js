@@ -38,8 +38,7 @@ function init() {
     
     createDisplay();
     // createGround();
-
-    loadOBJ( './torii/', 'torii' );
+    loadOBJ( './torii/', 'torii_full', new THREE.Vector3(0, 0.0, 0), new THREE.Vector3(0, 0, 0), );
     createRandomBox();
 
     createLight();
@@ -67,17 +66,18 @@ function animate() {
 
 function createScene(){
     scene = new THREE.Scene(); 
-    renderer = new THREE.CSS3DRenderer();
+    renderer = new THREE.CSS3DRenderer({ antialias:true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
     renderer.domElement.style.zIndex = 0;
-    renderer.domElement.style.position = 'absolute';  
+    renderer.domElement.style.position = 'absolute';
 }
 
 function createGLScene(){
     gl_scene = new THREE.Scene();
-    gl_scene.fog = new THREE.FogExp2(0xffffff, 0.01);
-    gl_renderer = new THREE.WebGLRenderer({ alpha:true });
+    gl_scene.fog = new THREE.FogExp2(0xbb9977, 0.01);
+    gl_renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+    gl_renderer.setClearColor(0x997755,1);
     gl_renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(gl_renderer.domElement);
     gl_renderer.domElement.style.zIndex = 1;
@@ -94,7 +94,7 @@ function createCamera(){
 function createLight(){
     var ambientLight = new THREE.AmbientLight(0x333333);
     gl_scene.add(ambientLight);
-    var directionalLight = new THREE.DirectionalLight(0xffffff);
+    var directionalLight = new THREE.DirectionalLight(0xff9966);
     directionalLight.position.set( 5, 50, 5 );
     directionalLight.castShadow            = true;
     directionalLight.shadow.camera.left    = -30;
@@ -228,7 +228,7 @@ function createGround(){
     gl_scene.add(plane);  
 }
 
-function loadOBJ( path, name ){
+function loadOBJ( path, name, position, rotation ){
     var mtlLoader = new THREE.MTLLoader();
     mtlLoader.setPath( path );
     
@@ -240,18 +240,23 @@ function loadOBJ( path, name ){
 	objLoader.setMaterials( materials );
 	objLoader.load( name + '.obj', function ( objects ) {
 	    objects.traverse( function( object ){
-		if ( object instanceof THREE.Mesh ) {
-		    object.castShadow    = true;
-		    object.receiveShadow = true;
-		    object.material.forEach(function(mat){
-			mat.alphaTest = 0.9;
-			mat.transparent = true;
-			mat.side = THREE.DoubleSide;
-		    });
-		}
+	    	if ( object instanceof THREE.Mesh ) {
+	    	    object.castShadow    = true;
+	    	    object.receiveShadow = true;
+		    if( object.material instanceof Array ){
+	    		object.material.forEach(function(mat){
+	    	    	    mat.alphaTest = 0.9;
+			    mat.blending = THREE.NormalBlending;
+	    	    	    mat.transparent = true;
+	    	    	    mat.side = THREE.DoubleSide;
+	    		});
+		    }else{
+			object.material.side = THREE.DoubleSide;
+		    }
+	    	}
 	    });
-	    objects.position.set( 0, 0.01, 0 );
-	    objects.scale.set( 0.1, 0.1, 0.1 );
+	    objects.position.set( position.x, position.y, position.z );
+	    objects.rotation.set( rotation.x, rotation.y, rotation.z );
 	    gl_scene.add( objects );
 	});
     });
