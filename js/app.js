@@ -221,7 +221,7 @@ function OZ( domElement, credit ){
       1.0, 1.9,
       new THREE.Vector3(position.x-0.51, position.y+1, position.z),
       new THREE.Vector3(0, -0.5*Math.PI, 0),
-      'https://www.calculator29.com'
+      'https://takanobu.calculator29.com/Lab/OZ/manual.html'
     );
   }
 
@@ -266,9 +266,9 @@ function OZ( domElement, credit ){
   function createRandomBox(){
     for(var i=0;i<10;i++){
       var pos = {
-        x: 30*(Math.random()-0.5),
-        y: 20*Math.random(),
-        z: 30*(Math.random()-0.5)
+        x: 10*(Math.random()-0.5),
+        y: 5*Math.random(),
+        z: 10*(Math.random()-0.5)
       };
       for(var j=0;j<10;j++){
         var Size = 0.5*Math.random();
@@ -277,9 +277,9 @@ function OZ( domElement, credit ){
           new THREE.MeshPhongMaterial({color: Math.random()*0xffffff})
         );
 
-        box.position.x = pos.x + 3*(Math.random()-0.5);
-        box.position.y = pos.y + 3*(Math.random()-0.5);
-        box.position.z = pos.z + 3*(Math.random()-0.5);
+        box.position.x = pos.x + 2*(Math.random()-0.5);
+        box.position.y = pos.y + 2*(Math.random()-0.5);
+        box.position.z = pos.z + 2*(Math.random()-0.5);
 
         box.castShadow = true;
 

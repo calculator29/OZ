@@ -3,42 +3,88 @@ THREE.OriginControls = function ( object, domElement, scene ){
   var moveState = { up: 0, down: 0, left: 0, right: 0, forward: 0, back: 0 };
   var pitchObject = new THREE.Object3D(), yawObject = new THREE.Object3D();
   var clock;
+  var velocity = new THREE.Vector3(0,0,0);
 
   clock = new THREE.Clock();
   init();
 
   this.update = function() {
     var root = yawObject;
-    var speed = 5*clock.getDelta();
+    var delta = clock.getDelta();
+    var speed = 4;
     var forward = getForward(root).normalize();
+    var height = getHeight( yawObject.position );
 
-    // Y軸に沿って移動
-    root.position.y = getHeight( scene, yawObject.position ) + 1.5 + 0.01*Math.sin( clock.oldTime * 0.002 );
-    if (moveState.up)
-      root.position.y += speed;
-    if (moveState.down)
-      root.position.y -= speed;
+    if( !CC_Y( velocity.y ) ){
+      velocity.x = 0;
+      velocity.z = 0;
 
-    // X,Z平面上を移動
-    if (moveState.forward) {
-      root.position.x += forward.x * speed;
-      root.position.z += forward.z * speed;
+      if (moveState.up){
+        velocity.y = 4.5;
+      }
+
+      if (moveState.forward) {
+        velocity.x += forward.x * speed;
+        velocity.z += forward.z * speed;
+      }
+      if (moveState.left) {
+        var left = forward.clone().applyAxisAngle(root.up, Math.PI / 2);
+        velocity.x += left.x * speed;
+        velocity.z += left.z * speed;
+      }
+      if (moveState.back) {
+        var back = forward.clone().multiplyScalar(-1);
+        velocity.x += back.x * speed;
+        velocity.z += back.z * speed;
+      }
+      if (moveState.right) {
+        var right = forward.clone().applyAxisAngle(root.up, -Math.PI / 2);
+        velocity.x += right.x * speed;
+        velocity.z += right.z * speed;
+      }
     }
-    if (moveState.left) {
-      var left = forward.clone().applyAxisAngle(root.up, Math.PI / 2);
-      root.position.x += left.x * speed;
-      root.position.z += left.z * speed;
+
+    if( velocity.y > -5 ) velocity.y -= 9.8*delta;
+    if( CC_XZ( velocity.x, 0 ) ) root.position.x += velocity.x * delta;
+    if( CC_XZ( 0, velocity.z ) ) root.position.z += velocity.z * delta;
+    if( CC_Y( velocity.y ) )     root.position.y += velocity.y * delta;
+    if( root.position.y < 1.8-0.1 ) root.position.y = 1.8-0.1;
+
+    function CC_XZ( x, z ){
+      var position = new THREE.Vector3( yawObject.position.x, yawObject.position.y, yawObject.position.z );
+      while( position.y > yawObject.position.y - 1.5 ){
+        var vec = new THREE.Vector3( x, 0, z ).normalize();
+        var ray = new THREE.Raycaster( position, vec );
+        var objs = ray.intersectObjects( scene.children, true );
+        for( var i=0; i<objs.length; i++ )
+          if( objs[i].distance < 0.4 ) return false;
+        position.y -= 0.1;
+      }
+      return true;
     }
-    if (moveState.back) {
-      var back = forward.clone().multiplyScalar(-1);
-      root.position.x += back.x * speed;
-      root.position.z += back.z * speed;
+
+    function CC_Y( y ){
+      var position = new THREE.Vector3( yawObject.position.x, yawObject.position.y - 0.8, yawObject.position.z );
+      var vec = new THREE.Vector3( 0, y, 0 ).normalize();
+      var ray = new THREE.Raycaster( position, vec );
+      var objs = ray.intersectObjects( scene.children, true );
+      for( var i=0; i<objs.length; i++ )
+        if( objs[i].distance < 1.0 ) return false;
+      return true;
     }
-    if (moveState.right) {
-      var right = forward.clone().applyAxisAngle(root.up, -Math.PI / 2);
-      root.position.x += right.x * speed;
-      root.position.z += right.z * speed;
+
+    function getHeight( position ){
+      var ray = new THREE.Raycaster( position, new THREE.Vector3( 0, -1, 0 ) );
+
+      var height = 0;
+      var objs = ray.intersectObjects( scene.children, true );
+      objs.forEach( function( obj ){
+        if( height <  obj.point.y) height = obj.point.y;
+      });
+      return height;
     }
+
+
   }
 
 
@@ -69,17 +115,7 @@ THREE.OriginControls = function ( object, domElement, scene ){
     return forward;
   }
 
-  function getHeight( scene, position ){
-    var vec = new THREE.Vector3( 0, -1, 0 );
-    var data = new THREE.Raycaster( position, vec );
 
-    var height = 0;
-    var objs = data.intersectObjects( scene.children, true );
-    objs.forEach( function( obj ){
-      if( height <  obj.point.y) height = obj.point.y;
-    });
-    return height;
-  }
 
   function init(){
     PointerLock();
