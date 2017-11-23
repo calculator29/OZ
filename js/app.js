@@ -215,21 +215,21 @@ function OZ( domElement, credit ){
   }
 
   function createDisplay(){
-    var position = new THREE.Vector3(3,0,0);
+    var position = new THREE.Vector3(3,0.5,0);
     var box = new THREE.Mesh(
-      new THREE.BoxGeometry(1,2,1.1),
+      new THREE.BoxGeometry(1,2.5,2),
       new THREE.MeshPhongMaterial({color: 0x999999})
     );
 
     box.position.x = position.x;
-    box.position.y = position.y+1;
+    box.position.y = position.y+1-0.25;
     box.position.z = position.z;
     box.castShadow = true;
     box.receiveShadow = true;
     glScene.add(box);
 
     create3dPage(
-      1.0, 1.9,
+      1.8, 1.8,
       new THREE.Vector3(position.x-0.51, position.y+1, position.z),
       new THREE.Vector3(0, -0.5*Math.PI, 0),
       'https://takanobu.calculator29.com/Lab/OZ/manual.html'
@@ -298,8 +298,8 @@ function OZ( domElement, credit ){
       }
       glScene.add(RandomBoxs);
     }
-    
-    
+
+
   }
 
 

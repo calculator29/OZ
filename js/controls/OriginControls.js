@@ -4,73 +4,97 @@ THREE.OriginControls = function ( object, domElement, scene ){
   var pitchObject = new THREE.Object3D(), yawObject = new THREE.Object3D();
   var clock;
   var velocity = new THREE.Vector3(0,0,0);
+  var acceleration = new THREE.Vector3(0,0,0);
+  var ground = true;
 
   clock = new THREE.Clock();
   init();
 
   this.update = function() {
+    var PlayerSize = new THREE.Vector2(0.5,1.5);
     var root = yawObject;
     var delta = clock.getDelta();
-    var speed = 4;
+    var acc = 0, viscosity = 0, e = 0.2;
     var forward = getForward(root).normalize();
     var height = getHeight( yawObject.position );
 
-    if( !CC_Y( velocity.y ) ){
-      velocity.x = 0;
-      velocity.z = 0;
-
-      if (moveState.up){
-        velocity.y = 4.5;
-      }
-
-      if (moveState.forward) {
-        velocity.x += forward.x * speed;
-        velocity.z += forward.z * speed;
-      }
-      if (moveState.left) {
-        var left = forward.clone().applyAxisAngle(root.up, Math.PI / 2);
-        velocity.x += left.x * speed;
-        velocity.z += left.z * speed;
-      }
-      if (moveState.back) {
-        var back = forward.clone().multiplyScalar(-1);
-        velocity.x += back.x * speed;
-        velocity.z += back.z * speed;
-      }
-      if (moveState.right) {
-        var right = forward.clone().applyAxisAngle(root.up, -Math.PI / 2);
-        velocity.x += right.x * speed;
-        velocity.z += right.z * speed;
-      }
+    if( ground ){
+      if (moveState.up) velocity.y = 6.5;
+      viscosity = 10;
+      acc = 50;
+    }else{
+      viscosity = 1;
+      acc = 5;
     }
 
-    if( velocity.y > -5 ) velocity.y -= 9.8*delta;
-    if( CC_XZ( velocity.x, 0 ) ) root.position.x += velocity.x * delta;
-    if( CC_XZ( 0, velocity.z ) ) root.position.z += velocity.z * delta;
-    if( CC_Y( velocity.y ) )     root.position.y += velocity.y * delta;
-    if( root.position.y < 1.8-0.1 ) root.position.y = 1.8-0.1;
+
+    acceleration.x =    0 - viscosity*velocity.x;
+    acceleration.y = -9.8 - viscosity*velocity.y;
+    acceleration.z =    0 - viscosity*velocity.z;
+
+    if (moveState.forward) {
+      acceleration.x += forward.x * acc;
+      acceleration.z += forward.z * acc;
+    }
+    if (moveState.left) {
+      var left = forward.clone().applyAxisAngle(root.up, Math.PI / 2);
+      acceleration.x += left.x * acc;
+      acceleration.z += left.z * acc;
+    }
+    if (moveState.back) {
+      var back = forward.clone().multiplyScalar(-1);
+      acceleration.x += back.x * acc;
+      acceleration.z += back.z * acc;
+    }
+    if (moveState.right) {
+      var right = forward.clone().applyAxisAngle(root.up, -Math.PI / 2);
+      acceleration.x += right.x * acc;
+      acceleration.z += right.z * acc;
+    }
+
+
+
+    velocity.x += acceleration.x*delta;
+    velocity.y += acceleration.y*delta;
+    velocity.z += acceleration.z*delta;
+
+    if( CC_XZ( velocity.x, 0 ) ) velocity.x *= -e;
+    else root.position.x += velocity.x * delta;
+
+    if( CC_XZ( 0, velocity.z ) ) velocity.z *= -e;
+    else root.position.z += velocity.z * delta;
+
+    ground = false;
+    if( CC_Y( velocity.y ) ) {
+      if( velocity.y < 0 ) ground = true;
+      velocity.y *= -e;
+    } else root.position.y += velocity.y * delta;
 
     function CC_XZ( x, z ){
       var position = new THREE.Vector3( yawObject.position.x, yawObject.position.y, yawObject.position.z );
-      while( position.y > yawObject.position.y - 1.5 ){
+      while( position.y > yawObject.position.y - PlayerSize.y ){
         var vec = new THREE.Vector3( x, 0, z ).normalize();
         var ray = new THREE.Raycaster( position, vec );
         var objs = ray.intersectObjects( scene.children, true );
         for( var i=0; i<objs.length; i++ )
-          if( objs[i].distance < 0.4 ) return false;
+          if( objs[i].distance < PlayerSize.x/2 ) return true;
         position.y -= 0.1;
       }
-      return true;
+      return false;
     }
 
     function CC_Y( y ){
-      var position = new THREE.Vector3( yawObject.position.x, yawObject.position.y - 0.8, yawObject.position.z );
+      /* 地面の最低値 */
+      if( yawObject.position.y < PlayerSize.y && y < 0 ) return true;
+      var head = 0.05;
+
+      var position = new THREE.Vector3( yawObject.position.x, yawObject.position.y - PlayerSize.y/2 + head*2, yawObject.position.z );
       var vec = new THREE.Vector3( 0, y, 0 ).normalize();
       var ray = new THREE.Raycaster( position, vec );
       var objs = ray.intersectObjects( scene.children, true );
       for( var i=0; i<objs.length; i++ )
-        if( objs[i].distance < 1.0 ) return false;
-      return true;
+        if( objs[i].distance < PlayerSize.y/2 + head ) return true;
+      return false;
     }
 
     function getHeight( position ){
