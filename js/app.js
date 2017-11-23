@@ -15,6 +15,8 @@ function OZ( domElement, credit ){
   var camera;
   var controls;
   var stats;
+  var RandomBoxs = new THREE.Object3D();
+  var clock = new THREE.Clock();
 
   var spFlag = PhoneCheck();
   function PhoneCheck(){
@@ -24,8 +26,8 @@ function OZ( domElement, credit ){
       flag = true;
     else if(userAgent.indexOf('iPad') > 0 || userAgent.indexOf('Android') > 0){
       flag = true;
-      return flag;
     }
+    return flag;
   }
 
 
@@ -58,6 +60,16 @@ function OZ( domElement, credit ){
   function animate() {
     requestAnimationFrame(animate);
     stats.update();
+
+    RandomBoxs.rotation.y += 0.001*clock.getDelta();
+    RandomBoxs.traverse(function(obj){
+      if( obj instanceof THREE.Mesh ){
+        obj.position.x += 0.001*Math.sin(0.001*clock.oldTime * obj.userData.omega.x);
+        obj.position.y += 0.001*Math.sin(0.001*clock.oldTime * obj.userData.omega.y);
+        obj.position.z += 0.001*Math.sin(0.001*clock.oldTime * obj.userData.omega.z);
+        obj.rotation.y = -RandomBoxs.rotation.y;
+      }
+    });
 
     glRenderer.render(glScene, camera);
     cssRenderer.render(cssScene, camera);
@@ -125,8 +137,7 @@ function OZ( domElement, credit ){
       //   else      camera_move = -1;
       // }, false );
       // glRenderer.domElement.addEventListener( 'touchend', function(){camera_move = 0;}, false );
-      // domElement.addEventListener('touchmove', function(event) {event.preventDefault();}, false );
-
+//       domElement.addEventListener('touchmove', function(event) {event.preventDefault();}, false );
       controls = new THREE.TrackballControls( camera, glRenderer.domElement );
       // domElement.addEventListener('touchstart', function(event) {
       //   if( tapCount < 2 ) {
@@ -282,10 +293,13 @@ function OZ( domElement, credit ){
         box.position.z = pos.z + 2*(Math.random()-0.5);
 
         box.castShadow = true;
-
-        glScene.add(box);
+        box.userData.omega = new THREE.Vector3(Math.random()-0.5,Math.random()-0.5,Math.random()-0.5);
+        RandomBoxs.add(box);
       }
+      glScene.add(RandomBoxs);
     }
+    
+    
   }
 
 
