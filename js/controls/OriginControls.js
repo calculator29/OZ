@@ -19,7 +19,7 @@ THREE.OriginControls = function ( object, domElement, scene ){
     var height = getHeight( yawObject.position );
 
     if( ground ){
-      if (moveState.up) velocity.y = 6.5;
+      if (moveState.up) velocity.y = 350*delta;
       viscosity = 10;
       acc = 50;
     }else{

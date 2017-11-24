@@ -7,7 +7,7 @@ function OZ( domElement, credit ){
   domElement.style.padding    = "0px";
 
   domElement.style.width  = window.innerWidth + "px";
-  domElement.style.height = window.innerHeight - credit.clientHeight + "px"
+  domElement.style.height = window.innerHeight - credit.clientHeight + "px";
 
 
   var cssScene, cssRenderer;
@@ -48,12 +48,14 @@ function OZ( domElement, credit ){
 
     createDisplay();
     loadOBJ( './cube/' , 'CubeRoom', undefined, undefined, new THREE.Vector3(1, 1, 1));
+    loadOBJ( './pagoda/' , 'Pagoda', new THREE.Vector3(-3, 0, 3), undefined, new THREE.Vector3(0.05, 0.05, 0.05));
     createRandomBox();
 
     InitControls();
 
     createBlocker();
     window.addEventListener('resize', onResize, false);
+    window.addEventListener('orientationchange', onResize, false);
   }
 
 
@@ -110,16 +112,16 @@ function OZ( domElement, credit ){
   }
 
   function InitLight(){
-    var ambientLight = new THREE.AmbientLight(0x333333);
+    var ambientLight = new THREE.AmbientLight(0x666666);
     glScene.add(ambientLight);
-    var directionalLight = new THREE.DirectionalLight(0xff9966);
-    directionalLight.position.set( 5, 25, 5 );
+    var directionalLight = new THREE.DirectionalLight(0xffffff);
+    directionalLight.position.set( 1, 5, 1 );
     directionalLight.castShadow            = true;
-    directionalLight.shadow.camera.left    = -50;
-    directionalLight.shadow.camera.right   =  50;
-    directionalLight.shadow.camera.bottom  = -50;
-    directionalLight.shadow.camera.top     =  50;
-    directionalLight.shadow.camera.far     = 150;
+    directionalLight.shadow.camera.left    = -10;
+    directionalLight.shadow.camera.right   =  10;
+    directionalLight.shadow.camera.bottom  = -10;
+    directionalLight.shadow.camera.top     =  10;
+    directionalLight.shadow.camera.far     =  20;
     directionalLight.shadow.mapSize.width  = 2048;
     directionalLight.shadow.mapSize.height = 2048;
     glScene.add(directionalLight);
@@ -197,7 +199,6 @@ function OZ( domElement, credit ){
     iframe.style.display = 'block';
     iframe.style.zoom = '0.001';
     iframe.src = url;
-
     div.appendChild(iframe);
 
     var cssObject = new THREE.CSS3DObject(div);
@@ -215,23 +216,12 @@ function OZ( domElement, credit ){
   }
 
   function createDisplay(){
-    var position = new THREE.Vector3(3,0.5,0);
-    var box = new THREE.Mesh(
-      new THREE.BoxGeometry(1,2.5,2),
-      new THREE.MeshPhongMaterial({color: 0x999999})
-    );
-
-    box.position.x = position.x;
-    box.position.y = position.y+1-0.25;
-    box.position.z = position.z;
-    box.castShadow = true;
-    box.receiveShadow = true;
-    glScene.add(box);
-
+    var position = new THREE.Vector3(3,0,0);
+    loadOBJ( './television/' , 'Television', new THREE.Vector3(position.x, position.y, position.z), new THREE.Vector3(-Math.PI/2, 0, Math.PI/2), new THREE.Vector3(0.01, 0.01, 0.01));
     create3dPage(
-      1.8, 1.8,
-      new THREE.Vector3(position.x-0.51, position.y+1, position.z),
-      new THREE.Vector3(0, -0.5*Math.PI, 0),
+      4, 2,
+      new THREE.Vector3(position.x-0.1, position.y+1.5, position.z),
+      new THREE.Vector3(0, -Math.PI/2, 0),
       'https://takanobu.calculator29.com/Lab/OZ/manual.html'
     );
   }
