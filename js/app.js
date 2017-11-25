@@ -219,8 +219,8 @@ function OZ( domElement, credit ){
     var position = new THREE.Vector3(3,0,0);
     loadOBJ( './television/' , 'Television', new THREE.Vector3(position.x, position.y, position.z), new THREE.Vector3(-Math.PI/2, 0, Math.PI/2), new THREE.Vector3(0.01, 0.01, 0.01));
     create3dPage(
-      4, 2,
-      new THREE.Vector3(position.x-0.1, position.y+1.5, position.z),
+      3.95, 2,
+      new THREE.Vector3(position.x-0.08, position.y+1.5, position.z),
       new THREE.Vector3(0, -Math.PI/2, 0),
       'https://takanobu.calculator29.com/Lab/OZ/manual.html'
     );
