@@ -11,28 +11,36 @@ THREE.OriginControls = function ( object, domElement, scene ){
   init();
 
   this.update = function() {
-    var PlayerSize = new THREE.Vector2(0.5,1.5);
+    var playerWidth  = 0.5;
+    var playerHeight = 1.5;
+    var playerHead   = 0.2;
+    var jumpHeight   = 0.5;
     var root = yawObject;
     var delta = clock.getDelta();
     var acc = 0, viscosity = 0, e = 0.1;
     var forward = getForward(root).normalize();
 
+    /* パラメータ設定 */
     if( ground ){
+      if (moveState.down){
+        acc = 10;
+        playerHeight = 1.0;
+      } else {
+        acc = 50;
+      }
       viscosity = 15;
       if (moveState.up) velocity.y = 500*delta;
-      if (moveState.down) acc = 10;
-      else acc = 50;
-
     }else{
       viscosity = 1;
       acc = 5;
     }
 
-
+    /* 加速度 */
     acceleration.x =   0 - viscosity*velocity.x;
     acceleration.y = -20 - viscosity*velocity.y;
     acceleration.z =   0 - viscosity*velocity.z;
 
+    /* 操作量 */
     if (moveState.forward) {
       acceleration.x += forward.x * acc;
       acceleration.z += forward.z * acc;
@@ -53,55 +61,72 @@ THREE.OriginControls = function ( object, domElement, scene ){
       acceleration.z += right.z * acc;
     }
 
-
-
+    /* 速度 */
     velocity.x += acceleration.x*delta;
     velocity.y += acceleration.y*delta;
     velocity.z += acceleration.z*delta;
 
-    if( CC_XZ( velocity.x, 0 ) ) velocity.x *= -e;
+    /* 衝突判定 */
+    if( checkHorizon( velocity.x, 0 ) ) velocity.x *= -e;
     else root.position.x += velocity.x * delta;
-
-    if( CC_XZ( 0, velocity.z ) ) velocity.z *= -e;
+    if( checkHorizon( 0, velocity.z ) ) velocity.z *= -e;
     else root.position.z += velocity.z * delta;
+    if( checkVertical( velocity.y ) ) velocity.y *= -e;
+    else root.position.y += velocity.y * delta;
 
+    /* 着地判定 */
     ground = false;
-    if( CC_Y( velocity.y ) ) {
-      if( velocity.y < 0 ) ground = true;
-      velocity.y *= -e;
-    } else root.position.y += velocity.y * delta;
+    var groundHeight = getHeight();
+    if( root.position.y < groundHeight + playerHeight ){
+      ground = true;
+      root.position.y = groundHeight + playerHeight - 0.001;
+    }
 
-    if( root.position.y < PlayerSize.y-0.01 ) root.position.y = PlayerSize.y-0.01;
 
+    function getDistance( position, x, y, z ){
+      var distance = 999;
+      var ray = new THREE.Raycaster( position, new THREE.Vector3( x, y, z ).normalize() );
+      var objs = ray.intersectObjects( scene.children, true );
+      for( var i=0; i<objs.length; i++ )
+        if( distance > objs[i].distance ) distance = objs[i].distance;
+      return distance;
+    }
 
-    function CC_XZ( x, z ){
-      var position = new THREE.Vector3( yawObject.position.x, yawObject.position.y, yawObject.position.z );
-      for(; position.y > yawObject.position.y - PlayerSize.y; position.y -= 0.1 ){
-        var ray = new THREE.Raycaster( position, new THREE.Vector3( x, 0, z ).normalize() );
-        var objs = ray.intersectObjects( scene.children, true );
-        for( var i=0; i<objs.length; i++ ) if( objs[i].distance < PlayerSize.x/2 ) return true;
+    function checkHorizon( x, z ){
+      var scanTop = yawObject.position.y + playerHead;
+      var space   = getDistance( yawObject.position, 0, 1, 0 ) - playerHead;
+
+      if( space > jumpHeight )
+        var scanBottom = yawObject.position.y - playerHeight + jumpHeight;
+      else
+        var scanBottom = yawObject.position.y - playerHeight + space;
+
+      var position = new THREE.Vector3(
+        yawObject.position.x,
+        yawObject.position.y,
+        yawObject.position.z
+      );
+      for(var i=0;i<10;i++){
+        var s = i/9;
+        position.y = s*scanTop+(1-s)*scanBottom;
+        if( getDistance( position, x, 0, z ) < playerWidth/2 ) return true;
       }
       return false;
     }
 
-    function CC_Y( y ){
-      var head = 0.05;
-
-      if( yawObject.position.y < PlayerSize.y && y < 0 ) return true;
+    function checkVertical( y ){
+      if( yawObject.position.y < playerHeight && y < 0 ) return true;
       var position = new THREE.Vector3(
         yawObject.position.x,
-        yawObject.position.y - PlayerSize.y/2 + head*2,
+        yawObject.position.y - playerHeight/2 + playerHead/2,
         yawObject.position.z
       );
-      var ray = new THREE.Raycaster( position, new THREE.Vector3( 0, y, 0 ).normalize() );
-      var objs = ray.intersectObjects( scene.children, true );
-      for( var i=0; i<objs.length; i++ )
-        if( objs[i].distance < PlayerSize.y/2 + head ) return true;
+      if( getDistance( position, 0, y, 0 ) < playerHeight/2 + playerHead/2 ) return true;
       return false;
     }
 
-    function getHeight( position ){
-      var ray = new THREE.Raycaster( position, new THREE.Vector3( 0, -1, 0 ) );
+    function getHeight(){
+      var ray = new THREE.Raycaster( yawObject.position, new THREE.Vector3( 0, -1, 0 ) );
 
       var height = 0;
       var objs = ray.intersectObjects( scene.children, true );

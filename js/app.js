@@ -49,6 +49,7 @@ function OZ( domElement, credit ){
     createDisplay();
     loadOBJ( './cube/' , 'CubeRoom', undefined, undefined, new THREE.Vector3(1, 1, 1));
     loadOBJ( './pagoda/' , 'Pagoda', new THREE.Vector3(-3, 0, 3), undefined, new THREE.Vector3(0.05, 0.05, 0.05));
+    loadOBJ( './staircase/' , 'SM_StairCase_02', new THREE.Vector3(0, 0, -2.7),  new THREE.Vector3(0, Math.PI, 0),  new THREE.Vector3(0.8, 0.8, 0.8) );
     createRandomBox();
 
     InitControls();
@@ -215,13 +216,16 @@ function OZ( domElement, credit ){
     cssScene.add(cssObject);
   }
 
-  function createDisplay(){
-    var position = new THREE.Vector3(3,0,0);
-    loadOBJ( './television/' , 'Television', new THREE.Vector3(position.x, position.y, position.z), new THREE.Vector3(-Math.PI/2, 0, Math.PI/2), new THREE.Vector3(0.01, 0.01, 0.01));
+  function createDisplay( position = new THREE.Vector3(4.5,1.6,-0.5), scale = new THREE.Vector3(1,1,1) ){
+    var rotation = new THREE.Vector3(0, -Math.PI/2, 0);
+    var tv_position = new THREE.Vector3( position.x, position.y, position.z );
+    var tv_scale = new THREE.Vector3( scale.x * 0.005, scale.y * 0.005, scale.z * 0.005 );
+    var tv_rotation = new THREE.Vector3( rotation.x - Math.PI/2, rotation.y + Math.PI/2, rotation.z + Math.PI/2 );
+    loadOBJ( './television/' , 'Television', tv_position, tv_rotation, tv_scale );
     create3dPage(
-      3.95, 2,
-      new THREE.Vector3(position.x-0.08, position.y+1.5, position.z),
-      new THREE.Vector3(0, -Math.PI/2, 0),
+      1.98*scale.x, 1*scale.z,
+      new THREE.Vector3(position.x-0.04*scale.x, position.y+0.75*scale.y, position.z),
+      rotation,
       'https://takanobu.calculator29.com/Lab/OZ/manual.html'
     );
   }
