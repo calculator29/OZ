@@ -47,9 +47,9 @@ function OZ( domElement, credit ){
     InitCamera();
 
     createDisplay();
-    loadOBJ( './cube/' , 'CubeRoom', undefined, undefined, new THREE.Vector3(1, 1, 1));
-    loadOBJ( './pagoda/' , 'Pagoda', new THREE.Vector3(-3, 0, 3), undefined, new THREE.Vector3(0.05, 0.05, 0.05));
-    loadOBJ( './staircase/' , 'SM_StairCase_02', new THREE.Vector3(0, 0, -2.7),  new THREE.Vector3(0, Math.PI, 0),  new THREE.Vector3(0.8, 0.8, 0.8) );
+    loadOBJ( './cube/' , 'CubeRoom', undefined, undefined, new THREE.Vector3(5, 5, 5));
+    loadOBJ( './pagoda/' , 'Pagoda', new THREE.Vector3(-0, 0, 7), undefined, new THREE.Vector3(0.3, 0.3, 0.3));
+    loadOBJ( './staircase/' , 'SM_StairCase_02', new THREE.Vector3(0, 0, -5),  new THREE.Vector3(0, Math.PI, 0),  new THREE.Vector3(1, 1, 1) );
     createRandomBox();
 
     InitControls();
@@ -67,9 +67,9 @@ function OZ( domElement, credit ){
     RandomBoxs.rotation.y += 0.001*clock.getDelta();
     RandomBoxs.traverse(function(obj){
       if( obj instanceof THREE.Mesh ){
-        obj.position.x += 0.001*Math.sin(0.001*clock.oldTime * obj.userData.omega.x);
-        obj.position.y += 0.001*Math.sin(0.001*clock.oldTime * obj.userData.omega.y);
-        obj.position.z += 0.001*Math.sin(0.001*clock.oldTime * obj.userData.omega.z);
+        obj.position.x += 0.001*obj.userData.gain.x*Math.sin(0.001*clock.oldTime * obj.userData.omega.x);
+        obj.position.y += 0.001*obj.userData.gain.y*Math.sin(0.001*clock.oldTime * obj.userData.omega.y);
+        obj.position.z += 0.001*obj.userData.gain.z*Math.sin(0.001*clock.oldTime * obj.userData.omega.z);
         obj.rotation.y = -RandomBoxs.rotation.y;
       }
     });
@@ -78,6 +78,8 @@ function OZ( domElement, credit ){
     cssRenderer.render(cssScene, camera);
 
     controls.update();
+
+    if( controls.position.y > 30 && Math.abs(controls.position.x) < 2 && Math.abs(controls.position.z) < 2 ) location.href="thanks.html";
   }
 
 
@@ -107,7 +109,7 @@ function OZ( domElement, credit ){
 
 
   function InitCamera(){
-    camera = new THREE.PerspectiveCamera(75, domElement.clientWidth / domElement.clientHeight, 0.01, 500);
+    camera = new THREE.PerspectiveCamera(75, domElement.clientWidth / domElement.clientHeight, 0.01, 100);
     camera.position.set(0,1,1);
     camera.rotation.set(0,0,0);
   }
@@ -132,31 +134,8 @@ function OZ( domElement, credit ){
 
   var tapCount = 0;
   function InitControls(){
-    if(spFlag) {
-      // glRenderer.domElement.addEventListener( 'touchstart', function OnTouch(event){
-      //   var x = event.pageX / domElement.clientHeight;
-      //   var y = event.pageY / domElement.clientWidth;
-      //   if(y<0.5) camera_move = 1;
-      //   else      camera_move = -1;
-      // }, false );
-      // glRenderer.domElement.addEventListener( 'touchend', function(){camera_move = 0;}, false );
-//       domElement.addEventListener('touchmove', function(event) {event.preventDefault();}, false );
-      controls = new THREE.TrackballControls( camera, glRenderer.domElement );
-      // domElement.addEventListener('touchstart', function(event) {
-      //   if( tapCount < 2 ) {
-      //     tapCount++;
-      //     setTimeout( function() { tapCount = 0; }, 300 );
-      //   } else {
-      //     alert("3Touch");
-      //     event.preventDefault() ;
-      //     tapCount = 0 ;
-      //     glRenderer.domElement.style.pointerEvents = "none";
-      //     domElement.style.pointerEvents = "none";
-      //   }
-      // }, false );
-    } else {
-      controls = new THREE.OriginControls( camera, glRenderer.domElement, glScene );
-    }
+    if(spFlag)  controls = new THREE.TrackballControls( camera, glRenderer.domElement );
+    else        controls = new THREE.OriginControls( camera, glRenderer.domElement, glScene );
   }
 
 
@@ -216,7 +195,7 @@ function OZ( domElement, credit ){
     cssScene.add(cssObject);
   }
 
-  function createDisplay( position = new THREE.Vector3(4.5,1.6,-0.5), scale = new THREE.Vector3(1,1,1) ){
+  function createDisplay( position = new THREE.Vector3(4.5,0,-0.5), scale = new THREE.Vector3(2,2,2) ){
     var rotation = new THREE.Vector3(0, -Math.PI/2, 0);
     var tv_position = new THREE.Vector3( position.x, position.y, position.z );
     var tv_scale = new THREE.Vector3( scale.x * 0.005, scale.y * 0.005, scale.z * 0.005 );
@@ -269,30 +248,88 @@ function OZ( domElement, credit ){
   }
 
   function createRandomBox(){
-    for(var i=0;i<10;i++){
+    var NUM = 100;
+    for(var i=0;i<NUM;i++){
+      var theta  = Math.PI+2*Math.PI*i/(NUM-1);
+      var height = 5+25*i/(NUM-1);
       var pos = {
-        x: 10*(Math.random()-0.5),
-        y: 5*Math.random(),
-        z: 10*(Math.random()-0.5)
+        x: 13*Math.sin(theta),
+        y: height,
+        z: 13*Math.cos(theta)
       };
-      for(var j=0;j<10;j++){
-        var Size = 0.5*Math.random();
-        var box = new THREE.Mesh(
-          new THREE.BoxGeometry(Size,Size,Size),
-          new THREE.MeshPhongMaterial({color: Math.random()*0xffffff})
-        );
 
-        box.position.x = pos.x + 2*(Math.random()-0.5);
-        box.position.y = pos.y + 2*(Math.random()-0.5);
-        box.position.z = pos.z + 2*(Math.random()-0.5);
+      var Size = 0.5*Math.random() + 1.0;
 
-        box.castShadow = true;
-        box.userData.omega = new THREE.Vector3(Math.random()-0.5,Math.random()-0.5,Math.random()-0.5);
-        RandomBoxs.add(box);
-      }
+      var box = new THREE.Mesh(
+        new THREE.BoxGeometry(Size,Size,Size),
+        new THREE.MeshPhongMaterial({color: Math.random()*0xffffff})
+      );
+
+      box.position.x = pos.x + 1*(Math.random()-0.5);
+      box.position.y = pos.y + 0*(Math.random()-0.5);
+      box.position.z = pos.z + 1*(Math.random()-0.5);
+
+      box.castShadow = true;
+      box.userData.omega = new THREE.Vector3(1*(Math.random()-0.5),1*(Math.random()-0.5),1*(Math.random()-0.5));
+      box.userData.gain  = new THREE.Vector3(5*(Math.random()-0.5),0*(Math.random()-0.5),5*(Math.random()-0.5));
+      RandomBoxs.add(box);
+
       glScene.add(RandomBoxs);
     }
 
+    for(var i=0;i<20;i++){
+      var height = 30;
+      var pos = {
+        x: 0,
+        y: height,
+        z: -15*i/19
+      };
+
+      var Size = 0.5*Math.random() + 1.0;
+
+      var box = new THREE.Mesh(
+        new THREE.BoxGeometry(Size,Size,Size),
+        new THREE.MeshPhongMaterial({color: Math.random()*0xffffff})
+      );
+
+      box.position.x = pos.x + 1*(Math.random()-0.5);
+      box.position.y = pos.y + 0*(Math.random()-0.5);
+      box.position.z = pos.z + 1*(Math.random()-0.5);
+
+      box.castShadow = true;
+      box.userData.omega = new THREE.Vector3(1*(Math.random()-0.5),1*(Math.random()-0.5),1*(Math.random()-0.5));
+      box.userData.gain  = new THREE.Vector3(5*(Math.random()-0.5),0*(Math.random()-0.5),5*(Math.random()-0.5));
+      RandomBoxs.add(box);
+
+      glScene.add(RandomBoxs);
+    }
+
+    for(var i=0;i<10;i++){
+      var height = 5;
+      var pos = {
+        x: 0,
+        y: 2*i/9+height-2,
+        z: -7-7*i/9
+      };
+
+      var Size = 0.5*Math.random() + 1.0;
+
+      var box = new THREE.Mesh(
+        new THREE.BoxGeometry(Size,Size,Size),
+        new THREE.MeshPhongMaterial({color: Math.random()*0xffffff})
+      );
+
+      box.position.x = pos.x + 1*(Math.random()-0.5);
+      box.position.y = pos.y + 0*(Math.random()-0.5);
+      box.position.z = pos.z + 1*(Math.random()-0.5);
+
+      box.castShadow = true;
+      box.userData.omega = new THREE.Vector3(1*(Math.random()-0.5),1*(Math.random()-0.5),1*(Math.random()-0.5));
+      box.userData.gain  = new THREE.Vector3(5*(Math.random()-0.5),0*(Math.random()-0.5),5*(Math.random()-0.5));
+      RandomBoxs.add(box);
+
+      glScene.add(RandomBoxs);
+    }
 
   }
 

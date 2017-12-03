@@ -10,6 +10,8 @@ THREE.OriginControls = function ( object, domElement, scene ){
   clock = new THREE.Clock();
   init();
 
+  this.position = yawObject.position;
+
   this.update = function() {
     var playerWidth     = 0.5;
     var playerHeight    = 1.5;
