@@ -11,23 +11,21 @@ THREE.OriginControls = function ( object, domElement, scene ){
   init();
 
   this.update = function() {
-    var playerWidth  = 0.5;
-    var playerHeight = 1.5;
-    var playerHead   = 0.2;
-    var jumpHeight   = 0.5;
+    var playerWidth     = 0.5;
+    var playerHeight    = 1.5;
+    var playerHead      = 0.2;
+    var jumpHeight      = 0.5;
     var root = yawObject;
     var delta = clock.getDelta();
     var acc = 0, viscosity = 0, e = 0.1;
     var forward = getForward(root).normalize();
 
     /* パラメータ設定 */
+    if (moveState.down) playerHeight = 1.3;
     if( ground ){
-      if (moveState.down){
-        acc = 10;
-        playerHeight = 1.0;
-      } else {
-        acc = 50;
-      }
+      if (moveState.down) acc = 10;
+      else acc = 50;
+
       viscosity = 15;
       if (moveState.up) velocity.y = 500*delta;
     }else{
@@ -101,13 +99,10 @@ THREE.OriginControls = function ( object, domElement, scene ){
       else
         var scanBottom = yawObject.position.y - playerHeight + space;
 
-      var position = new THREE.Vector3(
-        yawObject.position.x,
-        yawObject.position.y,
-        yawObject.position.z
-      );
-      for(var i=0;i<10;i++){
-        var s = i/9;
+      var position = yawObject.position.clone();
+      var NUM = 10;
+      for(var i=0;i<NUM;i++){
+        var s = i/(NUM-1);
         position.y = s*scanTop+(1-s)*scanBottom;
         if( getDistance( position, x, 0, z ) < playerWidth/2 ) return true;
       }
@@ -116,23 +111,15 @@ THREE.OriginControls = function ( object, domElement, scene ){
 
     function checkVertical( y ){
       if( yawObject.position.y < playerHeight && y < 0 ) return true;
-      var position = new THREE.Vector3(
-        yawObject.position.x,
-        yawObject.position.y - playerHeight/2 + playerHead/2,
-        yawObject.position.z
-      );
+      var position = yawObject.position.clone();
+      position.setY( yawObject.position.y - playerHeight/2 + playerHead/2 );
       if( getDistance( position, 0, y, 0 ) < playerHeight/2 + playerHead/2 ) return true;
       return false;
     }
 
     function getHeight(){
-      var ray = new THREE.Raycaster( yawObject.position, new THREE.Vector3( 0, -1, 0 ) );
-
-      var height = 0;
-      var objs = ray.intersectObjects( scene.children, true );
-      objs.forEach( function( obj ){
-        if( height <  obj.point.y) height = obj.point.y;
-      });
+      var position = yawObject.position.clone();
+      var height = yawObject.position.y - getDistance( position, 0, -1, 0 );
       return height;
     }
 
