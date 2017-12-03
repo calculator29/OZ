@@ -79,7 +79,10 @@ function OZ( domElement, credit ){
 
     controls.update();
 
-    if( controls.position.y > 30 && Math.abs(controls.position.x) < 2 && Math.abs(controls.position.z) < 2 ) location.href="thanks.html";
+    if( controls.position.y > 30 && Math.abs(controls.position.x) < 2 && Math.abs(controls.position.z) < 2 ) {
+      RandomBoxs.scale.set(0.05,0.05,0.05);
+      document.getElementById('monitor').src = 'https://takanobu.calculator29.com/Lab/OZ/thanks.html';
+    }
   }
 
 
@@ -178,6 +181,7 @@ function OZ( domElement, credit ){
     iframe.style.height = '100%';
     iframe.style.display = 'block';
     iframe.style.zoom = '0.001';
+    iframe.id = 'monitor';
     iframe.src = url;
     div.appendChild(iframe);
 
